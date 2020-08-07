@@ -1,9 +1,9 @@
 package cc.mrbird.febs.gateway.enhance.controller;
 
-import cc.mrbird.febs.common.entity.QueryRequest;
+import cc.mrbird.febs.common.core.entity.QueryRequest;
 import cc.mrbird.febs.gateway.enhance.entity.BlockLog;
 import cc.mrbird.febs.gateway.enhance.service.BlockLogService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,11 +16,11 @@ import reactor.core.publisher.Mono;
  * @author MrBird
  */
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("route/auth/blockLog")
 public class BlockLogController {
 
-    @Autowired
-    private BlockLogService blockLogService;
+    private final BlockLogService blockLogService;
 
     @GetMapping("data")
     public Flux<BlockLog> findUserPages(QueryRequest request, BlockLog blockLog) {
@@ -34,7 +34,7 @@ public class BlockLogController {
 
     @DeleteMapping
     @PreAuthorize("hasAuthority('admin')")
-    public Flux<BlockLog> deleteBlockLog(String ids){
+    public Flux<BlockLog> deleteBlockLog(String ids) {
         return blockLogService.delete(ids);
     }
 }

@@ -1,6 +1,6 @@
 package cc.mrbird.febs.gateway.enhance.service.impl;
 
-import cc.mrbird.febs.common.service.RedisService;
+import cc.mrbird.febs.common.redis.service.RedisService;
 import cc.mrbird.febs.gateway.enhance.entity.BlackList;
 import cc.mrbird.febs.gateway.enhance.entity.RateLimitRule;
 import cc.mrbird.febs.gateway.enhance.service.RouteEnhanceCacheService;
@@ -21,8 +21,12 @@ import java.util.Set;
 @Service
 public class RouteEnhanceCacheServiceImpl implements RouteEnhanceCacheService {
 
-    @Autowired(required = false)
     private RedisService redisService;
+
+    @Autowired(required = false)
+    public void setRedisService(RedisService redisService) {
+        this.redisService = redisService;
+    }
 
     @Override
     public void saveAllBlackList(Flux<BlackList> blackList) {

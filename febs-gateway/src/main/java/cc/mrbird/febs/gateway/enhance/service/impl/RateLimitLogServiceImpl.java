@@ -1,7 +1,8 @@
 package cc.mrbird.febs.gateway.enhance.service.impl;
 
-import cc.mrbird.febs.common.entity.QueryRequest;
-import cc.mrbird.febs.common.utils.DateUtil;
+import cc.mrbird.febs.common.core.entity.QueryRequest;
+import cc.mrbird.febs.common.core.entity.constant.StringConstant;
+import cc.mrbird.febs.common.core.utils.DateUtil;
 import cc.mrbird.febs.gateway.enhance.entity.RateLimitLog;
 import cc.mrbird.febs.gateway.enhance.mapper.RateLimitLogMapper;
 import cc.mrbird.febs.gateway.enhance.service.RateLimitLogService;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 
 /**
  * @author MrBird
@@ -24,10 +26,18 @@ import java.time.LocalDateTime;
 @Service
 public class RateLimitLogServiceImpl implements RateLimitLogService {
 
-    @Autowired(required = false)
     private RateLimitLogMapper rateLimitLogMapper;
-    @Autowired(required = false)
     private ReactiveMongoTemplate template;
+
+    @Autowired(required = false)
+    public void setRateLimitLogMapper(RateLimitLogMapper rateLimitLogMapper) {
+        this.rateLimitLogMapper = rateLimitLogMapper;
+    }
+
+    @Autowired(required = false)
+    public void setTemplate(ReactiveMongoTemplate template) {
+        this.template = template;
+    }
 
     @Override
     public Mono<RateLimitLog> create(RateLimitLog rateLimitLog) {
@@ -38,8 +48,8 @@ public class RateLimitLogServiceImpl implements RateLimitLogService {
 
     @Override
     public Flux<RateLimitLog> delete(String ids) {
-        String[] idArray = StringUtils.splitByWholeSeparatorPreserveAllTokens(ids, ",");
-        return rateLimitLogMapper.deleteByIdIn(idArray);
+        String[] idArray = StringUtils.splitByWholeSeparatorPreserveAllTokens(ids, StringConstant.COMMA);
+        return rateLimitLogMapper.deleteByIdIn(Arrays.asList(idArray));
     }
 
     @Override

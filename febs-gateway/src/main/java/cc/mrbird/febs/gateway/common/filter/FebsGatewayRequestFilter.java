@@ -1,10 +1,9 @@
 package cc.mrbird.febs.gateway.common.filter;
 
-import cc.mrbird.febs.common.entity.constant.FebsConstant;
-import cc.mrbird.febs.gateway.common.properties.FebsGatewayProperties;
+import cc.mrbird.febs.common.core.entity.constant.FebsConstant;
 import cc.mrbird.febs.gateway.enhance.service.RouteEnhanceService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -22,25 +21,21 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Component
 @Order(0)
+@RequiredArgsConstructor
 public class FebsGatewayRequestFilter implements GlobalFilter {
 
-    @Autowired
-    private FebsGatewayProperties properties;
-    @Autowired
-    private RouteEnhanceService routeEnhanceService;
-
+    private final RouteEnhanceService routeEnhanceService;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
     @Value("${febs.gateway.enhance:false}")
     private Boolean routeEhance;
-
-    private AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         if (routeEhance) {
-            Mono<Void> balckListResult = routeEnhanceService.filterBalckList(exchange);
-            if (balckListResult != null) {
+            Mono<Void> blackListResult = routeEnhanceService.filterBlackList(exchange);
+            if (blackListResult != null) {
                 routeEnhanceService.saveBlockLogs(exchange);
-                return balckListResult;
+                return blackListResult;
             }
             Mono<Void> rateLimitResult = routeEnhanceService.filterRateLimit(exchange);
             if (rateLimitResult != null) {

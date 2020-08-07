@@ -1,13 +1,15 @@
 package cc.mrbird.febs.gateway.enhance.service.impl;
 
-import cc.mrbird.febs.common.entity.QueryRequest;
-import cc.mrbird.febs.common.utils.DateUtil;
+import cc.mrbird.febs.common.core.entity.QueryRequest;
+import cc.mrbird.febs.common.core.entity.constant.StringConstant;
+import cc.mrbird.febs.common.core.utils.DateUtil;
 import cc.mrbird.febs.gateway.enhance.entity.BlackList;
 import cc.mrbird.febs.gateway.enhance.mapper.BlackListMapper;
 import cc.mrbird.febs.gateway.enhance.service.BlackListService;
 import cc.mrbird.febs.gateway.enhance.service.RouteEnhanceCacheService;
 import cc.mrbird.febs.gateway.enhance.utils.AddressUtil;
 import cc.mrbird.febs.gateway.enhance.utils.PageableExecutionUtil;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,19 +21,29 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 
 /**
  * @author MrBird
  */
 @Service
+@RequiredArgsConstructor
 public class BlackListServiceImpl implements BlackListService {
 
-    @Autowired(required = false)
+
+    private final RouteEnhanceCacheService routeEnhanceCacheService;
     private BlackListMapper blackListMapper;
-    @Autowired(required = false)
     private ReactiveMongoTemplate template;
-    @Autowired
-    private RouteEnhanceCacheService routeEnhanceCacheService;
+
+    @Autowired(required = false)
+    public void setBlackListMapper(BlackListMapper blackListMapper) {
+        this.blackListMapper = blackListMapper;
+    }
+
+    @Autowired(required = false)
+    public void setTemplate(ReactiveMongoTemplate template) {
+        this.template = template;
+    }
 
     @Override
     public Flux<BlackList> findAll() {
@@ -41,8 +53,9 @@ public class BlackListServiceImpl implements BlackListService {
     @Override
     public Mono<BlackList> create(BlackList blackList) {
         blackList.setCreateTime(DateUtil.formatFullTime(LocalDateTime.now(), DateUtil.FULL_TIME_SPLIT_PATTERN));
-        if (StringUtils.isNotBlank(blackList.getIp()))
+        if (StringUtils.isNotBlank(blackList.getIp())) {
             blackList.setLocation(AddressUtil.getCityInfo(blackList.getIp()));
+        }
         return blackListMapper.insert(blackList).doOnSuccess(b -> routeEnhanceCacheService.saveBlackList(blackList));
     }
 
@@ -53,14 +66,14 @@ public class BlackListServiceImpl implements BlackListService {
                     routeEnhanceCacheService.removeBlackList(b);
                     BeanUtils.copyProperties(blackList, b);
                     return this.blackListMapper.save(b);
-                }).doOnSuccess(b -> routeEnhanceCacheService.saveBlackList(b));
+                }).doOnSuccess(routeEnhanceCacheService::saveBlackList);
     }
 
     @Override
     public Flux<BlackList> delete(String ids) {
-        String[] idArray = StringUtils.splitByWholeSeparatorPreserveAllTokens(ids, ",");
-        return blackListMapper.deleteByIdIn(idArray)
-                .doOnNext(b -> routeEnhanceCacheService.removeBlackList(b));
+        String[] idArray = StringUtils.splitByWholeSeparatorPreserveAllTokens(ids, StringConstant.COMMA);
+        return blackListMapper.deleteByIdIn(Arrays.asList(idArray))
+                .doOnNext(routeEnhanceCacheService::removeBlackList);
     }
 
     @Override
